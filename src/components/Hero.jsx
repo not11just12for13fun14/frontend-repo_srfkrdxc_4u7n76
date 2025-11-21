@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState, Suspense } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
+import ErrorBoundary from './ErrorBoundary';
 
 // Lazy-load Spline to avoid blank screen if WebGL/asset fails to initialize
 const LazySpline = React.lazy(() => import('@splinetool/react-spline'));
@@ -26,11 +27,13 @@ function Hero() {
       <motion.div style={{ opacity, filter: blur.to(v => `blur(${v}px)`), y }} className="absolute inset-0">
         {mounted && !splineError ? (
           <Suspense fallback={<div className="w-full h-full bg-black" />}>
-            <LazySpline
-              scene="https://prod.spline.design/g5OaHmrKTDxRI7Ig/scene.splinecode"
-              style={{ width: '100%', height: '100%' }}
-              onError={(e) => setSplineError(e?.message || 'Failed to load 3D scene')}
-            />
+            <ErrorBoundary fallback={<div className="w-full h-full bg-black" /> }>
+              <LazySpline
+                scene="https://prod.spline.design/g5OaHmrKTDxRI7Ig/scene.splinecode"
+                style={{ width: '100%', height: '100%' }}
+                onError={(e) => setSplineError(e?.message || 'Failed to load 3D scene')}
+              />
+            </ErrorBoundary>
           </Suspense>
         ) : (
           <div className="w-full h-full bg-black" />
