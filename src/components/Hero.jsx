@@ -1,6 +1,8 @@
-import { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState, Suspense } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import Spline from '@splinetool/react-spline';
+
+// Lazy-load Spline to avoid blank screen if WebGL/asset fails to initialize
+const LazySpline = React.lazy(() => import('@splinetool/react-spline'));
 
 function Hero() {
   const ref = useRef(null);
@@ -11,15 +13,28 @@ function Hero() {
   const blur = useTransform(scrollYProgress, [0, 0.6], [0, 12]);
   const y = useTransform(scrollYProgress, [0, 1], [0, -100]);
 
+  const [mounted, setMounted] = useState(false);
+  const [splineError, setSplineError] = useState(null);
+
   useEffect(() => {
-    // No-op: placeholder for future interactive hooks with Spline if needed
+    setMounted(true);
   }, []);
 
   return (
     <section ref={ref} className="relative h-[110vh] bg-black overflow-hidden">
-      {/* Spline full-width cover background */}
+      {/* Spline full-width cover background (client-only, lazy) */}
       <motion.div style={{ opacity, filter: blur.to(v => `blur(${v}px)`), y }} className="absolute inset-0">
-        <Spline scene="https://prod.spline.design/g5OaHmrKTDxRI7Ig/scene.splinecode" style={{ width: '100%', height: '100%' }} />
+        {mounted && !splineError ? (
+          <Suspense fallback={<div className="w-full h-full bg-black" />}>
+            <LazySpline
+              scene="https://prod.spline.design/g5OaHmrKTDxRI7Ig/scene.splinecode"
+              style={{ width: '100%', height: '100%' }}
+              onError={(e) => setSplineError(e?.message || 'Failed to load 3D scene')}
+            />
+          </Suspense>
+        ) : (
+          <div className="w-full h-full bg-black" />
+        )}
       </motion.div>
 
       {/* Subtle gradient overlay to blend with black background */}
@@ -35,6 +50,9 @@ function Hero() {
         >
           You make the art, we do the rest.
         </motion.h1>
+        {splineError && (
+          <p className="mt-4 text-sm text-white/50">3D scene unavailable right now. The rest of the page is fully functional.</p>
+        )}
       </div>
 
       {/* Cinematic dissolve mask using pseudo grid lines */}
