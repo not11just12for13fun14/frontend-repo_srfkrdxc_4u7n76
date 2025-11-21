@@ -11,9 +11,12 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, info) {
-    if (process.env.NODE_ENV !== 'production') {
+    try {
+      // Avoid referencing process/env in the browser (can crash in some bundlers)
       // eslint-disable-next-line no-console
       console.error('ErrorBoundary caught an error:', error, info);
+    } catch (_) {
+      /* noop */
     }
   }
 
